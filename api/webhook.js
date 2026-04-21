@@ -2,25 +2,33 @@ module.exports = async (req, res) => {
   try {
     const body = req.body || {};
 
-    const email = body.email?.toLowerCase().trim();
-    const zone = body.zone || null;
-    const interest = body.interest_area || null;
+    console.log("RAW BODY:", JSON.stringify(body, null, 2));
+
+    const email =
+      body.email?.toLowerCase?.().trim?.() ||
+      body.contact?.email?.toLowerCase?.().trim?.() ||
+      null;
+
+    const zone =
+      body.zone ||
+      body.contact?.zone ||
+      null;
+
+    const interest =
+      body.interest_area ||
+      body.contact?.interest_area ||
+      null;
 
     if (!email) {
-      return res.status(400).json({ error: "Missing email" });
+      return res.status(400).json({
+        error: "Missing email",
+        receivedBody: body
+      });
     }
 
     const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
     const BASE_ID = process.env.AIRTABLE_BASE_ID;
     const TABLE_NAME = "Beta Sign-ups";
-
-    if (!AIRTABLE_API_KEY || !BASE_ID) {
-      return res.status(500).json({
-        error: "Missing Airtable environment variables",
-        hasApiKey: !!AIRTABLE_API_KEY,
-        hasBaseId: !!BASE_ID,
-      });
-    }
 
     const formula = `LOWER({Email Address})="${email}"`;
     const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}?filterByFormula=${encodeURIComponent(formula)}`;
@@ -49,6 +57,13 @@ module.exports = async (req, res) => {
 
     const recordId = findData.records[0].id;
 
+    const fields = {
+      last_zone_updated_at: new Date().toISOString(),
+    };
+
+    if (zone) fields.Zone = zone;
+    if (interest) fields["Interest Area"] = Array.isArray(interest) ? interest : [interest];
+
     const updateRes = await fetch(
       `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}/${recordId}`,
       {
@@ -57,13 +72,7 @@ module.exports = async (req, res) => {
           Authorization: `Bearer ${AIRTABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          fields: {
-            Zone: zone,
-            "Interest Area": interest,
-            last_zone_updated_at: new Date().toISOString(),
-          },
-        }),
+        body: JSON.stringify({ fields }),
       }
     );
 
