@@ -6,16 +6,19 @@ module.exports = async (req, res) => {
 
     const email =
       body.email?.toLowerCase?.().trim?.() ||
+      body["contact[email]"]?.toLowerCase?.().trim?.() ||
       body.contact?.email?.toLowerCase?.().trim?.() ||
       null;
 
     const zone =
       body.zone ||
+      body["contact[zone]"] ||
       body.contact?.zone ||
       null;
 
     const interest =
       body.interest_area ||
+      body["contact[interest_area]"] ||
       body.contact?.interest_area ||
       null;
 
@@ -62,7 +65,9 @@ module.exports = async (req, res) => {
     };
 
     if (zone) fields.Zone = zone;
-    if (interest) fields["Interest Area"] = Array.isArray(interest) ? interest : [interest];
+    if (interest) {
+      fields["Interest Area"] = Array.isArray(interest) ? interest : [interest];
+    }
 
     const updateRes = await fetch(
       `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}/${recordId}`,
