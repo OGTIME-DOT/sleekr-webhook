@@ -5,10 +5,10 @@ module.exports = async (req, res) => {
     console.log("RAW BODY:", JSON.stringify(body, null, 2));
 
     const email =
-      body.email?.toLowerCase?.().trim?.() ||
-      body["contact[email]"]?.toLowerCase?.().trim?.() ||
-      body.contact?.email?.toLowerCase?.().trim?.() ||
-      null;
+  body.email?.toLowerCase?.().trim?.() ||
+  body["contact[email]"]?.toLowerCase?.().trim?.() ||
+  body.contact?.email?.toLowerCase?.().trim?.() ||
+  null;
 
     const zone =
       body.zone ||
