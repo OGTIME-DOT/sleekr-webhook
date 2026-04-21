@@ -2,13 +2,15 @@ module.exports = async (req, res) => {
   try {
     const body = req.body || {};
 
+    console.log("=== WEBHOOK DEBUG START ===");
     console.log("RAW BODY:", JSON.stringify(body, null, 2));
+    console.log("BODY KEYS:", Object.keys(body));
 
     const email =
-  body.email?.toLowerCase?.().trim?.() ||
-  body["contact[email]"]?.toLowerCase?.().trim?.() ||
-  body.contact?.email?.toLowerCase?.().trim?.() ||
-  null;
+      body.email?.toLowerCase?.().trim?.() ||
+      body["contact[email]"]?.toLowerCase?.().trim?.() ||
+      body.contact?.email?.toLowerCase?.().trim?.() ||
+      null;
 
     const zone =
       body.zone ||
@@ -22,10 +24,16 @@ module.exports = async (req, res) => {
       body.contact?.interest_area ||
       null;
 
+    console.log("PARSED VALUES:");
+    console.log("email:", email);
+    console.log("zone:", zone);
+    console.log("interest:", interest);
+    console.log("=== WEBHOOK DEBUG END ===");
+
     if (!email) {
       return res.status(400).json({
         error: "Missing email",
-        receivedBody: body
+        receivedBody: body,
       });
     }
 
@@ -34,7 +42,9 @@ module.exports = async (req, res) => {
     const TABLE_NAME = "Beta Sign-ups";
 
     const formula = `LOWER({Email Address})="${email}"`;
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}?filterByFormula=${encodeURIComponent(formula)}`;
+    const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(
+      TABLE_NAME
+    )}?filterByFormula=${encodeURIComponent(formula)}`;
 
     const findRes = await fetch(url, {
       headers: {
@@ -43,6 +53,9 @@ module.exports = async (req, res) => {
     });
 
     const findData = await findRes.json();
+
+    console.log("AIRTABLE LOOKUP STATUS:", findRes.status);
+    console.log("AIRTABLE LOOKUP RESPONSE:", JSON.stringify(findData, null, 2));
 
     if (!findRes.ok) {
       return res.status(findRes.status).json({
@@ -69,8 +82,12 @@ module.exports = async (req, res) => {
       fields["Interest Area"] = Array.isArray(interest) ? interest : [interest];
     }
 
+    console.log("AIRTABLE UPDATE FIELDS:", JSON.stringify(fields, null, 2));
+
     const updateRes = await fetch(
-      `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}/${recordId}`,
+      `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(
+        TABLE_NAME
+      )}/${recordId}`,
       {
         method: "PATCH",
         headers: {
@@ -83,6 +100,9 @@ module.exports = async (req, res) => {
 
     const updateData = await updateRes.json();
 
+    console.log("AIRTABLE UPDATE STATUS:", updateRes.status);
+    console.log("AIRTABLE UPDATE RESPONSE:", JSON.stringify(updateData, null, 2));
+
     if (!updateRes.ok) {
       return res.status(updateRes.status).json({
         error: "Airtable update failed",
@@ -93,6 +113,8 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       success: true,
       email,
+      zone,
+      interest,
       recordId,
       updated: updateData,
     });
