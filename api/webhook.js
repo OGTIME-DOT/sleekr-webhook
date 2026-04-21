@@ -12,17 +12,21 @@ module.exports = async (req, res) => {
       body.contact?.email?.toLowerCase?.().trim?.() ||
       null;
 
-    const zone =
-      body.zone ||
-      body["contact[zone]"] ||
-      body.contact?.zone ||
-      null;
+     const zone =
+    body.zone ||
+    body["contact[zone]"] ||
+    body["contact[fields][zone]"] ||
+    body.contact?.zone ||
+    body.contact?.fields?.zone ||
+    null;
 
     const interest =
       body.interest_area ||
       body["contact[interest_area]"] ||
+      body["contact[fields][interest_area]"] ||
       body.contact?.interest_area ||
-      null;
+      body.contact?.fields?.interest_area ||
+      null;;
 
     console.log("PARSED VALUES:");
     console.log("email:", email);
